@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Conda
+.env
+.venv
+.envrc
+
+# VS Code
+.vscode/
+
+# Local data
+docs/
+data/raw/
+data/interim/
+data/processed/
+
+# Egg
+src/immunodash.egg-info/
