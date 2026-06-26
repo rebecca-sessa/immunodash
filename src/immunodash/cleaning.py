@@ -24,6 +24,12 @@ POTENCY_ACTIVITY_TYPES = [
     "EC50",
 ]
 
+REQUIRED_COLUMNS = [
+    "canonical_smiles",
+    "standard_value",
+    "standard_units",
+]
+
 
 def convert_numeric_columns(
     df: pd.DataFrame
@@ -42,7 +48,7 @@ Returns
 pandas.DataFrame
     Copy of the input DataFrame with selected columns
     converted to numeric data types.
-"""
+    """
     clean_df = df.copy()
 
     for column, dtype in NUMERIC_COLUMNS.items():
@@ -73,7 +79,7 @@ Returns
 pandas.DataFrame
     Copy of the input DataFrame containing only
     standardized bioactivity measurements.
-"""
+    """
     clean_df = df.copy()
 
     clean_df = clean_df[
@@ -100,7 +106,7 @@ Returns
 pandas.DataFrame
     Copy of the input DataFrame containing only
     selected potency-related activity types.
-"""
+    """
     clean_df = df.copy()
 
     clean_df = clean_df[
@@ -110,5 +116,58 @@ pandas.DataFrame
     clean_df = clean_df[
         clean_df["standard_type"].isin(activity_types)
     ].reset_index(drop=True)
+
+    return clean_df
+
+
+def remove_missing_measurements(
+    df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+Remove records missing essential information for downstream analyses.
+
+Parameters
+----------
+df : pandas.DataFrame
+    DataFrame containing ChEMBL bioactivity records.
+
+Returns
+-------
+pandas.DataFrame
+    Copy of the input DataFrame with incomplete records removed.
+    """
+    clean_df = df.copy()
+
+    clean_df = clean_df.dropna(
+        subset=REQUIRED_COLUMNS
+    ).reset_index(drop=True)
+
+    return clean_df
+
+
+def clean_activities(
+    df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+Apply the standard ImmunoDash cleaning pipeline to bioactivity data.
+
+Parameters
+----------
+df : pandas.DataFrame
+    DataFrame containing raw ChEMBL bioactivity records.
+
+Returns
+-------
+pandas.DataFrame
+    Cleaned DataFrame ready for downstream analyses.
+"""
+
+    clean_df = convert_numeric_columns(df)
+
+    clean_df = filter_standardized(clean_df)
+
+    clean_df = filter_activity_types(clean_df)
+
+    clean_df = remove_missing_measurements(clean_df)
 
     return clean_df
