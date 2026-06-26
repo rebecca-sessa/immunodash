@@ -1,3 +1,10 @@
+"""
+Utilities for retrieving and validating biological targets from ChEMBL.
+
+This module provides functions for searching ChEMBL targets and
+returning validated target records for downstream analyses.
+"""
+
 from immunodash.client import ChEMBLClient
 
 client = ChEMBLClient()
