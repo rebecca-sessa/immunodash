@@ -7,13 +7,17 @@ physicochemical descriptors used in cheminformatics
 analyses.
 """
 
+# Imports
 import pandas as pd
 
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import Crippen
 from rdkit.Chem import Lipinski
+from rdkit.Chem import rdFingerprintGenerator
+from rdkit.Chem.Scaffolds import MurckoScaffold
 
+# Configuration
 RDKIT_DESCRIPTORS = {
     "molecular_weight": Descriptors.MolWt,
     "logp": Crippen.MolLogP,
@@ -26,6 +30,7 @@ RDKIT_DESCRIPTORS = {
 }
 
 
+# Private helpers
 def _smiles_to_mol(
     smiles: str
 ):
@@ -56,6 +61,7 @@ ValueError
     return mol
 
 
+# Public functions
 def calculate_rdkit_descriptors(
     molecules: pd.DataFrame
 ) -> pd.DataFrame:
@@ -103,3 +109,88 @@ def calculate_rdkit_descriptors(
     )
 
     return descriptor_df
+
+
+def calculate_morgan_fingerprints(
+    molecules: pd.DataFrame,
+    radius: int = 2,
+    n_bits: int = 2048
+) -> pd.DataFrame:
+    """
+    Calculate Morgan fingerprints for a molecule dataset.
+
+    Parameters
+    ----------
+    molecules : pandas.DataFrame
+        Molecule-level dataset containing canonical SMILES.
+
+    radius : int, default=2
+        Radius used to generate Morgan fingerprints.
+
+    n_bits : int, default=2048
+        Length of the fingerprint bit vector.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of the input DataFrame enriched with Morgan
+        fingerprints.
+    """
+
+    generator = rdFingerprintGenerator.GetMorganGenerator(
+        radius=radius,
+        fpSize=n_bits,
+    )
+
+    fingerprint_df = molecules.copy()
+
+    fingerprints = []
+
+    for smiles in fingerprint_df["canonical_smiles"]:
+
+        mol = _smiles_to_mol(smiles)
+
+        fingerprint = generator.GetFingerprint(mol)
+
+        fingerprints.append(fingerprint)
+
+    fingerprint_df["morgan_fingerprint"] = fingerprints
+
+    return fingerprint_df
+
+
+def calculate_murcko_scaffolds(
+    molecules: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Calculate Bemis–Murcko scaffolds for a molecule dataset.
+
+    Parameters
+    ----------
+    molecules : pandas.DataFrame
+        Molecule-level dataset containing canonical SMILES.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of the input DataFrame enriched with Murcko
+        scaffold SMILES.
+    """
+
+    scaffold_df = molecules.copy()
+
+    scaffolds = []
+
+    for smiles in scaffold_df["canonical_smiles"]:
+
+        mol = _smiles_to_mol(smiles)
+
+        scaffold = MurckoScaffold.GetScaffoldForMol(mol)
+
+        scaffold_smiles = Chem.MolToSmiles(scaffold)
+
+        scaffolds.append(scaffold_smiles)
+
+    scaffold_df["murcko_scaffold"] = scaffolds
+
+    return scaffold_df
